@@ -1,7 +1,21 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import React, { useEffect, useRef } from "react";
+import {
+    Building2,
+    Home,
+    Store,
+    Factory,
+    Laptop,
+    Palmtree,
+    Warehouse,
+    Hotel,
+    ArrowRight,
+} from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Category {
     id: string;
@@ -10,36 +24,130 @@ interface Category {
     count: number;
 }
 
-interface CategoriesProps {
-    categories: Category[];
-}
+const iconMap: Record<string, React.ElementType> = {
+    "🏠": Home,
+    "🏢": Building2,
+    "🏭": Factory,
+    "🛒": Store,
+    "💻": Laptop,
+    "🏖️": Palmtree,
+    "🏬": Warehouse,
+    "🏨": Hotel,
+};
 
-export default function Categories({ categories }: CategoriesProps) {
+const gradients = [
+    "from-blue-600 to-blue-400",
+    "from-emerald-600 to-emerald-400",
+    "from-purple-600 to-purple-400",
+    "from-amber-600 to-amber-400",
+    "from-rose-600 to-rose-400",
+    "from-cyan-600 to-cyan-400",
+];
+
+export default function Categories({ categories }: { categories: Category[] }) {
+    const sectionRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!sectionRef.current) return;
+
+        const ctx = gsap.context(() => {
+            gsap.fromTo(
+                ".section-header",
+                { opacity: 0, y: 50 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 1,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: sectionRef.current,
+                        start: "top 80%",
+                    },
+                }
+            );
+
+            gsap.fromTo(
+                ".category-card",
+                { opacity: 0, y: 60, scale: 0.9 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.8,
+                    stagger: 0.1,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: ".categories-grid",
+                        start: "top 85%",
+                    },
+                }
+            );
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
     return (
-        <section className="py-20 bg-[#0a0f1d] relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-linear-to-r from-transparent via-white/5 to-transparent" />
-            <div className="max-w-7xl mx-auto px-8 md:px-12">
-                <div className="text-center mb-16 space-y-4">
-                    <h2 className="text-2xl md:text-3xl font-bold font-heading text-white tracking-tighter">Invest in Your Verticals</h2>
-                    <p className="text-slate-500 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-                        Systematic institutional exposure across diverse high-precision property sectors mapping global wealth flows.
+        <section ref={sectionRef} className="section-padding relative">
+            <div className="container-custom">
+                {/* Section Header */}
+                <div className="section-header text-center mb-16 space-y-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
+                        <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">
+                            Browse Categories
+                        </span>
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-bold font-heading">
+                        Invest by{" "}
+                        <span className="gradient-text">Property Type</span>
+                    </h2>
+                    <p className="text-white/40 text-lg max-w-2xl mx-auto">
+                        Explore diverse property categories and find the perfect
+                        investment opportunity that matches your portfolio goals.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 md:gap-8">
-                    {categories.map((cat) => (
-                        <Link
-                            key={cat.id}
-                            href={`/ideas?category=${cat.id}`}
-                            className="group flex flex-col items-center p-5 rounded-2xl bg-white/2 border border-white/5 hover:bg-[#151c2e] hover:border-blue-500/30 hover:shadow-3xl transition-all duration-500 hover:-translate-y-2"
-                        >
-                            <div className="w-14 h-14 rounded-2xl bg-[#0a0f1d] flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-500 shadow-inner border border-white/5 group-hover:bg-blue-600 group-hover:text-white">
-                                <span className="text-2xl group-hover:rotate-12 transition-transform duration-300">{cat.icon}</span>
+                {/* Categories Grid */}
+                <div className="categories-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {categories.map((category, index) => {
+                        const Icon = iconMap[category.icon] || Building2;
+                        const gradient = gradients[index % gradients.length];
+                        return (
+                            <div
+                                key={category.id}
+                                className="category-card group cursor-pointer"
+                            >
+                                <div className="relative bg-white/[0.02] backdrop-blur-sm border border-white/5 rounded-2xl p-6 text-center space-y-4 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-500 h-full">
+                                    {/* Hover glow */}
+                                    <div
+                                        className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                                    />
+
+                                    <div
+                                        className={`relative mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} bg-opacity-10 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
+                                        style={{
+                                            background: `linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(16, 185, 129, 0.05))`,
+                                        }}
+                                    >
+                                        <Icon className="w-6 h-6 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                                    </div>
+
+                                    <div className="relative">
+                                        <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors">
+                                            {category.name}
+                                        </h3>
+                                        <p className="text-xs text-white/30 mt-1">
+                                            {category.count} Properties
+                                        </p>
+                                    </div>
+
+                                    <div className="relative">
+                                        <ArrowRight className="w-4 h-4 mx-auto text-white/0 group-hover:text-white/40 translate-y-2 group-hover:translate-y-0 transition-all duration-300" />
+                                    </div>
+                                </div>
                             </div>
-                            <h3 className="font-bold text-white text-center text-sm mb-2 tracking-tight group-hover:text-blue-400 transition-colors uppercase">{cat.name}</h3>
-                            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">{cat.count} Units</p>
-                        </Link>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </section>

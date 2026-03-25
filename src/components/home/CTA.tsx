@@ -1,45 +1,159 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { Globe, Lock } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    ArrowRight,
+    Mail,
+    Bell,
+    CheckCircle,
+    Sparkles,
+} from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function CTA() {
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const [email, setEmail] = useState("");
+    const [isSubscribed, setIsSubscribed] = useState(false);
+
+    useEffect(() => {
+        if (!sectionRef.current) return;
+
+        const ctx = gsap.context(() => {
+            gsap.fromTo(
+                ".cta-content",
+                { opacity: 0, y: 60, scale: 0.95 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 1.2,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: sectionRef.current,
+                        start: "top 80%",
+                    },
+                }
+            );
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    const handleSubscribe = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (email) {
+            setIsSubscribed(true);
+            setTimeout(() => {
+                setIsSubscribed(false);
+                setEmail("");
+            }, 3000);
+        }
+    };
+
     return (
-        <section className="py-20 px-6 bg-[#0a0f1d] relative">
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/3 rounded-2xl blur-[150px] pointer-events-none" />
+        <section ref={sectionRef} className="section-padding relative overflow-hidden">
+            <div className="container-custom relative z-10">
+                <div className="cta-content relative">
+                    {/* Main CTA Card */}
+                    <div className="relative bg-gradient-to-br from-blue-600/20 via-[#151c2e] to-emerald-600/10 rounded-[40px] border border-white/5 p-12 md:p-16 lg:p-20 overflow-hidden">
+                        {/* Background effects */}
+                        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[120px]" />
+                        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-emerald-600/5 blur-[100px]" />
+                        <div className="absolute inset-0 grid-pattern opacity-20" />
 
-            <div className="max-w-7xl mx-auto bg-linear-to-br from-[#151c2e] to-[#0a0f1d] rounded-2xl p-10 md:p-14 relative overflow-hidden text-center border border-white/10 shadow-[0_80px_160px_rgba(0,0,0,0.8)]">
-                <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #fff 1px, transparent 0)', backgroundSize: '64px 64px' }} />
-                <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-blue-600/15 rounded-2xl blur-[120px] pointer-events-none" />
-                <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-emerald-500/5 rounded-2xl blur-[120px] pointer-events-none" />
+                        {/* Floating elements */}
+                        <div className="absolute top-10 right-10 hidden lg:block">
+                            <div className="w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center animate-float">
+                                <Bell className="w-8 h-8 text-blue-400" />
+                            </div>
+                        </div>
 
-                <div className="relative z-10 space-y-10">
-                    <div className="space-y-6">
-                        <h2 className="text-3xl md:text-5xl font-bold font-heading text-white leading-none tracking-tighter">
-                            Establish Your <br /> Wealth <span className="text-blue-500">Position.</span>
-                        </h2>
-                        <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-                            Join 45,000+ institutional level participants. Secure fractional ownership in Tier-1 commercial assets via the global registry.
-                        </p>
-                    </div>
+                        <div className="relative z-10 max-w-2xl">
+                            {/* Badge */}
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
+                                <Mail className="w-3 h-3 text-blue-400" />
+                                <span className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                                    Stay Updated
+                                </span>
+                            </div>
 
-                    <div className="flex flex-col sm:flex-row justify-center gap-6 pt-2">
-                        <Link href="/auth/register" className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-bold text-[10px] uppercase tracking-[0.4em] hover:bg-blue-500 transition-all shadow-3xl shadow-blue-500/40 active:scale-95 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
-                            <span className="relative z-10">Initialize Registry</span>
-                        </Link>
-                        <Link href="/contact" className="bg-white/5 border border-white/10 text-white px-10 py-5 rounded-2xl font-bold text-[10px] uppercase tracking-[0.4em] hover:bg-white/10 transition-all backdrop-blur-3xl active:scale-95 group">
-                            <span className="relative z-10 group-hover:text-blue-400 transition-colors">Protocol Inquiry</span>
-                        </Link>
-                    </div>
+                            {/* Title */}
+                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading leading-tight mb-6">
+                                Never Miss a{" "}
+                                <span className="gradient-text">
+                                    Premium Listing
+                                </span>
+                            </h2>
 
-                    <div className="flex items-center justify-center gap-6 pt-12">
-                        <div className="w-12 h-px bg-white/5" />
-                        <p className="text-[10px] text-slate-700 font-bold uppercase tracking-[0.5em] flex items-center gap-3">
-                            <Lock size={14} /> SECURED GLOBAL LEDGER
-                        </p>
-                        <div className="w-12 h-px bg-white/5" />
+                            {/* Subtitle */}
+                            <p className="text-lg text-white/40 mb-10 max-w-xl leading-relaxed">
+                                Get exclusive early access to new property listings,
+                                market insights, and investment opportunities
+                                delivered directly to your inbox.
+                            </p>
+
+                            {/* Newsletter Form */}
+                            <form
+                                onSubmit={handleSubscribe}
+                                className="flex flex-col sm:flex-row gap-3 max-w-lg"
+                            >
+                                <div className="relative flex-1">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
+                                    <Input
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-6 text-white placeholder:text-white/30 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30 text-sm"
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubscribed}
+                                    className={`rounded-2xl px-8 py-6 text-sm font-semibold transition-all duration-300 ${
+                                        isSubscribed
+                                            ? "bg-emerald-600 hover:bg-emerald-500"
+                                            : "bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+                                    }`}
+                                >
+                                    {isSubscribed ? (
+                                        <>
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Subscribed!
+                                        </>
+                                    ) : (
+                                        <>
+                                            Subscribe
+                                            <ArrowRight className="w-4 h-4 ml-2" />
+                                        </>
+                                    )}
+                                </Button>
+                            </form>
+
+                            {/* Trust line */}
+                            <div className="flex items-center gap-4 mt-6">
+                                <div className="flex -space-x-2">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div
+                                            key={i}
+                                            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-[#151c2e] flex items-center justify-center"
+                                        >
+                                            <span className="text-[10px] text-white/60">
+                                                {String.fromCharCode(64 + i)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-white/30">
+                                    Join 2,500+ investors getting weekly updates
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
