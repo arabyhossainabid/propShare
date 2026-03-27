@@ -21,12 +21,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
+  type FormErrors = { email?: string; password?: string; submit?: string };
+
   const router = useRouter();
   const { login } = useAuth();
   const pageRef = useRef<HTMLDivElement>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (!pageRef.current) return;
@@ -58,15 +61,48 @@ export default function LoginPage() {
     return () => ctx.revert();
   }, []);
 
+  const validate = () => {
+    const newErrors: FormErrors = {};
+    if (!formData.email) {
+      newErrors.email = 'Please enter your email';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Please enter your password';
+    }
+
+    return newErrors;
+  };
+
+  const updateField = (field: 'email' | 'password', value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const loggedInUser = await login(formData.email, formData.password);
       toast.success('Login successful');
       router.replace(loggedInUser.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (error) {
-      toast.error(getApiErrorMessage(error));
+      const errorMsg =
+        getApiErrorMessage(error) || 'Email or password is incorrect';
+      setErrors({ submit: errorMsg });
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +188,15 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className='space-y-5'>
+              {errors.submit && (
+                <div className='auth-field p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-sm'>
+                  <div className='w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5'>
+                    <span className='text-red-400 font-bold text-xs'>!</span>
+                  </div>
+                  <p className='text-red-400'>{errors.submit}</p>
+                </div>
+              )}
+
               <div className='auth-field space-y-2'>
                 <label className='text-xs text-white/40 uppercase tracking-wider font-medium'>
                   Email Address
@@ -160,15 +205,19 @@ export default function LoginPage() {
                   <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                   <Input
                     type='email'
-                    required
                     placeholder='you@example.com'
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className='bg-white/5 border-white/10 rounded-xl pl-11 py-6 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                    onChange={(e) => updateField('email', e.target.value)}
+                    className={`bg-white/5 rounded-xl pl-11 py-6 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${
+                      errors.email
+                        ? 'border-red-500/50 focus-visible:border-red-500/50'
+                        : 'border-white/10 focus-visible:border-blue-500/30'
+                    }`}
                   />
                 </div>
+                {errors.email && (
+                  <p className='text-xs text-red-400 pl-1'>{errors.email}</p>
+                )}
               </div>
 
               <div className='auth-field space-y-2'>
@@ -179,13 +228,14 @@ export default function LoginPage() {
                   <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                   <Input
                     type={showPassword ? 'text' : 'password'}
-                    required
                     placeholder='Enter your password'
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className='bg-white/5 border-white/10 rounded-xl pl-11 pr-11 py-6 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                    onChange={(e) => updateField('password', e.target.value)}
+                    className={`bg-white/5 rounded-xl pl-11 pr-11 py-6 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${
+                      errors.password
+                        ? 'border-red-500/50 focus-visible:border-red-500/50'
+                        : 'border-white/10 focus-visible:border-blue-500/30'
+                    }`}
                   />
                   <button
                     type='button'
@@ -199,18 +249,30 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className='text-xs text-red-400 pl-1'>{errors.password}</p>
+                )}
               </div>
 
               {/* Remember me */}
-              <div className='auth-field flex items-center gap-3'>
-                <input
-                  type='checkbox'
-                  id='remember'
-                  className='w-4 h-4 rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500/30'
-                />
-                <label htmlFor='remember' className='text-sm text-white/40'>
-                  Remember me for 30 days
-                </label>
+              <div className='auth-field flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <input
+                    type='checkbox'
+                    id='remember'
+                    className='w-4 h-4 rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500/30'
+                  />
+                  <label htmlFor='remember' className='text-sm text-white/40'>
+                    Remember me
+                  </label>
+                </div>
+                <Link
+                  prefetch={false}
+                  href='/auth/forgot-password'
+                  className='text-xs text-blue-400 hover:text-blue-300 transition-colors'
+                >
+                  Forgot password?
+                </Link>
               </div>
 
               <Button

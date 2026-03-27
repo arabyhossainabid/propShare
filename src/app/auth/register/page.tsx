@@ -25,13 +25,27 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
+  type FormState = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
+    agreeTerms: boolean;
+  };
+
+  type FormErrors = Partial<Record<keyof FormState, string>> & {
+    submit?: string;
+  };
+
   const router = useRouter();
   const { register } = useAuth();
   const pageRef = useRef<HTMLDivElement>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormState>({
     firstName: '',
     lastName: '',
     email: '',
@@ -40,6 +54,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     agreeTerms: false,
   });
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (!pageRef.current) return;
@@ -80,24 +95,63 @@ export default function RegisterPage() {
     );
   }, [currentStep]);
 
+  const setField = <K extends keyof FormState>(
+    field: K,
+    value: FormState[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateStep1 = () => {
+    const newErrors: FormErrors = {};
+    if (!formData.firstName.trim())
+      newErrors.firstName = 'Please enter your first name';
+    if (!formData.lastName.trim())
+      newErrors.lastName = 'Please enter your last name';
+    if (!formData.email) newErrors.email = 'Please enter your email';
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = 'Please enter a valid email';
+    if (!formData.phone.trim())
+      newErrors.phone = 'Please enter your phone number';
+    return newErrors;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: FormErrors = {};
+    if (!formData.password) newErrors.password = 'Please enter a password';
+    else if (formData.password.length < 8)
+      newErrors.password = 'Use at least 8 characters';
+
+    if (formData.password !== formData.confirmPassword)
+      newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.agreeTerms)
+      newErrors.agreeTerms = 'Please accept the terms to continue';
+    return newErrors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
     if (currentStep === 1) {
+      const step1Errors = validateStep1();
+      if (Object.keys(step1Errors).length > 0) {
+        setErrors(step1Errors);
+        return;
+      }
       setCurrentStep(2);
     } else {
-      if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
+      const step2Errors = validateStep2();
+      if (Object.keys(step2Errors).length > 0) {
+        setErrors(step2Errors);
         return;
       }
 
       setIsLoading(true);
       try {
-        if (!formData.phone.trim()) {
-          toast.error('Phone number is required');
-          setIsLoading(false);
-          return;
-        }
-
         await register({
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           email: formData.email,
@@ -107,7 +161,10 @@ export default function RegisterPage() {
         toast.success('Registration successful. Please login.');
         router.push('/auth/login');
       } catch (error) {
-        toast.error(getApiErrorMessage(error));
+        const errorMsg =
+          getApiErrorMessage(error) || 'Could not create account. Try again.';
+        setErrors({ submit: errorMsg });
+        toast.error(errorMsg);
       } finally {
         setIsLoading(false);
       }
@@ -250,6 +307,14 @@ export default function RegisterPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className='space-y-4'>
+              {errors.submit && (
+                <div className='auth-field p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-sm mb-4'>
+                  <div className='w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5'>
+                    <span className='text-red-400 font-bold text-xs'>!</span>
+                  </div>
+                  <p className='text-red-400'>{errors.submit}</p>
+                </div>
+              )}
               <div className='step-content'>
                 {currentStep === 1 ? (
                   <>
@@ -261,35 +326,35 @@ export default function RegisterPage() {
                         <div className='relative'>
                           <User className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                           <Input
-                            required
                             placeholder='John'
                             value={formData.firstName}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                firstName: e.target.value,
-                              })
+                              setField('firstName', e.target.value)
                             }
-                            className='bg-white/5 border-white/10 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                            className={`bg-white/5 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.firstName ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                           />
                         </div>
+                        {errors.firstName && (
+                          <p className='text-[10px] text-red-400 pl-1'>
+                            {errors.firstName}
+                          </p>
+                        )}
                       </div>
                       <div className='auth-field space-y-2'>
                         <label className='text-xs text-white/40 uppercase tracking-wider font-medium'>
                           Last Name
                         </label>
                         <Input
-                          required
                           placeholder='Doe'
                           value={formData.lastName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              lastName: e.target.value,
-                            })
-                          }
-                          className='bg-white/5 border-white/10 rounded-xl py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                          onChange={(e) => setField('lastName', e.target.value)}
+                          className={`bg-white/5 rounded-xl py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.lastName ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                         />
+                        {errors.lastName && (
+                          <p className='text-[10px] text-red-400 pl-1'>
+                            {errors.lastName}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -301,15 +366,17 @@ export default function RegisterPage() {
                         <Mail className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                         <Input
                           type='email'
-                          required
                           placeholder='you@example.com'
                           value={formData.email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
-                          }
-                          className='bg-white/5 border-white/10 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                          onChange={(e) => setField('email', e.target.value)}
+                          className={`bg-white/5 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.email ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                         />
                       </div>
+                      {errors.email && (
+                        <p className='text-[10px] text-red-400 pl-1'>
+                          {errors.email}
+                        </p>
+                      )}
                     </div>
 
                     <div className='auth-field space-y-2'>
@@ -319,15 +386,17 @@ export default function RegisterPage() {
                       <div className='relative'>
                         <Phone className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                         <Input
-                          required
                           placeholder='+880 1XXXXXXXXX'
                           value={formData.phone}
-                          onChange={(e) =>
-                            setFormData({ ...formData, phone: e.target.value })
-                          }
-                          className='bg-white/5 border-white/10 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                          onChange={(e) => setField('phone', e.target.value)}
+                          className={`bg-white/5 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.phone ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                         />
                       </div>
+                      {errors.phone && (
+                        <p className='text-[10px] text-red-400 pl-1'>
+                          {errors.phone}
+                        </p>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -340,16 +409,10 @@ export default function RegisterPage() {
                         <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                         <Input
                           type={showPassword ? 'text' : 'password'}
-                          required
                           placeholder='Min. 8 characters'
                           value={formData.password}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              password: e.target.value,
-                            })
-                          }
-                          className='bg-white/5 border-white/10 rounded-xl pl-10 pr-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                          onChange={(e) => setField('password', e.target.value)}
+                          className={`bg-white/5 rounded-xl pl-10 pr-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.password ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                         />
                         <button
                           type='button'
@@ -363,9 +426,14 @@ export default function RegisterPage() {
                           )}
                         </button>
                       </div>
+                      {errors.password && (
+                        <p className='text-[10px] text-red-400 pl-1'>
+                          {errors.password}
+                        </p>
+                      )}
 
                       {/* Password Strength */}
-                      {formData.password && (
+                      {formData.password && !errors.password && (
                         <div className='flex items-center gap-2 mt-2'>
                           <div className='flex gap-1 flex-1'>
                             {[1, 2, 3, 4].map((i) => (
@@ -394,58 +462,62 @@ export default function RegisterPage() {
                         <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20' />
                         <Input
                           type='password'
-                          required
                           placeholder='Re-enter your password'
                           value={formData.confirmPassword}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              confirmPassword: e.target.value,
-                            })
+                            setField('confirmPassword', e.target.value)
                           }
-                          className='bg-white/5 border-white/10 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/30'
+                          className={`bg-white/5 rounded-xl pl-10 py-5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/30 ${errors.confirmPassword ? 'border-red-500/50 focus-visible:border-red-500/50' : 'border-white/10 focus-visible:border-blue-500/30'}`}
                         />
                         {formData.confirmPassword &&
                           formData.password === formData.confirmPassword && (
                             <Check className='absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400' />
                           )}
                       </div>
+                      {errors.confirmPassword && (
+                        <p className='text-[10px] text-red-400 pl-1'>
+                          {errors.confirmPassword}
+                        </p>
+                      )}
                     </div>
 
                     {/* Terms */}
-                    <div className='flex items-start gap-3'>
-                      <input
-                        type='checkbox'
-                        id='terms'
-                        required
-                        checked={formData.agreeTerms}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            agreeTerms: e.target.checked,
-                          })
-                        }
-                        className='w-4 h-4 mt-0.5 rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500/30'
-                      />
-                      <label
-                        htmlFor='terms'
-                        className='text-xs text-white/40 leading-relaxed'
-                      >
-                        I agree to the{' '}
-                        <Link
-                          href='/terms'
-                          className='text-blue-400 hover:text-blue-300'
+                    <div className='flex flex-col gap-1'>
+                      <div className='flex items-start gap-3'>
+                        <input
+                          type='checkbox'
+                          id='terms'
+                          checked={formData.agreeTerms}
+                          onChange={(e) =>
+                            setField('agreeTerms', e.target.checked)
+                          }
+                          className='w-4 h-4 mt-0.5 rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500/30'
+                        />
+                        <label
+                          htmlFor='terms'
+                          className='text-xs text-white/40 leading-relaxed'
                         >
-                          Terms of Service
-                        </Link>{' '}
-                        and{' '}
-                        <Link
-                          href='/privacy'
-                          className='text-blue-400 hover:text-blue-300'
-                        >
-                          Privacy Policy
-                        </Link>
-                      </label>
+                          I agree to the{' '}
+                          <Link
+                            href='/terms'
+                            className='text-blue-400 hover:text-blue-300'
+                          >
+                            Terms of Service
+                          </Link>{' '}
+                          and{' '}
+                          <Link
+                            href='/privacy'
+                            className='text-blue-400 hover:text-blue-300'
+                          >
+                            Privacy Policy
+                          </Link>
+                        </label>
+                      </div>
+                      {errors.agreeTerms && (
+                        <p className='text-[10px] text-red-400 pl-7'>
+                          {errors.agreeTerms}
+                        </p>
+                      )}
                     </div>
                   </>
                 )}

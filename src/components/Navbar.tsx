@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiErrorMessage } from '@/lib/api';
-import gsap from 'gsap';
 import { ArrowRight, Building2, Menu, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -34,16 +33,15 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
 
-    // Animate navbar entrance
-    gsap.fromTo(
-      '.navbar',
-      { y: -100, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 0.2 }
-    );
+    // Initial check
+    handleScroll();
+
+    // Removed GSAP animation for navbar to fix flickering and target issues,
+    // and to make the navbar load instantly without delay.
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -93,13 +91,10 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className='hidden lg:flex items-center gap-3'>
             {isLoading ? (
-              <Button
-                variant='ghost'
-                disabled
-                className='text-white/40 rounded-xl text-sm'
-              >
-                Checking session...
-              </Button>
+              <div className='flex gap-3'>
+                <div className='w-20 h-9 bg-white/5 animate-pulse rounded-xl' />
+                <div className='w-28 h-9 bg-white/10 animate-pulse rounded-xl shadow-lg shadow-white/5' />
+              </div>
             ) : isAuthenticated ? (
               <>
                 <Link href={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}>
@@ -185,13 +180,10 @@ export default function Navbar() {
                 {/* Mobile CTA */}
                 <div className='p-6 border-t border-white/5 space-y-3'>
                   {isLoading ? (
-                    <Button
-                      variant='outline'
-                      disabled
-                      className='w-full rounded-xl border-white/10 text-white/40 h-12'
-                    >
-                      Checking session...
-                    </Button>
+                    <div className='space-y-3'>
+                      <div className='w-full h-12 bg-white/5 animate-pulse rounded-xl' />
+                      <div className='w-full h-12 bg-white/10 animate-pulse rounded-xl shadow-lg shadow-white/5' />
+                    </div>
                   ) : isAuthenticated ? (
                     <>
                       <Link
