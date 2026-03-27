@@ -30,5 +30,10 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    ".recovery_backup*/**",
+    ".recovery_backup_before_1h_restore_*/**",
+    ".recovery_backup_full_*/**"
+  ]
 }
