@@ -199,8 +199,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await fetchCurrentUser();
             return; // Successfully loaded user with stored token
           } catch {
-            // Token invalid, clear it
-            clearAuthStateIfTokenMatches(storedToken);
+            // If /auth/me fails once, try refresh token fallback before clearing.
+            const refreshedToken = await tryRefreshAccessToken();
+            if (refreshedToken) {
+              if (!isMounted) return;
+              setSessionAccessToken(refreshedToken);
+              setAccessToken(refreshedToken);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('accessToken', refreshedToken);
+              }
+
+              try {
+                await fetchCurrentUser();
+                return;
+              } catch {
+                clearAuthStateIfTokenMatches(refreshedToken);
+              }
+            } else {
+              clearAuthStateIfTokenMatches(storedToken);
+            }
           }
         }
 

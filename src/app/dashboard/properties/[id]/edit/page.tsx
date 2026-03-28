@@ -4,6 +4,7 @@ import { ImageUploader } from '@/components/ImageUploader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   api,
   getApiErrorMessage,
@@ -31,6 +32,7 @@ import toast from 'react-hot-toast';
 export default function EditPropertyPage() {
   const router = useRouter();
   const params = useParams();
+  const { isAuthenticated, isLoading: isAuthLoading, accessToken } = useAuth();
   const propertyId = String(params.id);
   const [form, setForm] = useState({
     title: 'Rooftop Café Space',
@@ -52,6 +54,7 @@ export default function EditPropertyPage() {
 
   const { isLoading: isLoadingProperty, isError: isErrorProperty } = useQuery({
     queryKey: ['edit-property', propertyId],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     queryFn: async () => {
       const res = await api.get<{
         success: true;
@@ -81,6 +84,7 @@ export default function EditPropertyPage() {
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['edit-property-categories'],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     queryFn: async () => {
       const res = await api.get<{
         success: true;
@@ -343,7 +347,7 @@ export default function EditPropertyPage() {
         </Button>
         <Button
           onClick={() => updateAndSubmitMutation.mutate()}
-          className='flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-5 text-sm font-semibold group'
+          className='flex-1 bg-white/10 hover:bg-white/15 text-white rounded-xl py-5 text-sm font-semibold group'
         >
           Update & Re-Submit{' '}
           <Send className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />

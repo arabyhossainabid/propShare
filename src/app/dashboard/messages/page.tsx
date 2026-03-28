@@ -2,10 +2,11 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import { api, getApiErrorMessage, normalizeList } from '@/lib/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, MessageCircle, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 type ContactMessage = {
@@ -24,6 +25,7 @@ type ContactReply = {
 
 export default function DashboardMessagesPage() {
   const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: isAuthLoading, accessToken } = useAuth();
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null
   );
@@ -59,12 +61,19 @@ export default function DashboardMessagesPage() {
     isError: isErrorMessages,
   } = useQuery({
     queryKey: ['dashboard-contact-messages'],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     refetchInterval: 5000,
     queryFn: async () => {
       const res = await api.get('/contacts/my-messages');
       return normalizeList<ContactMessage>(res.data?.data);
     },
   });
+
+  useEffect(() => {
+    if (!myMessages.some((m) => m.id === selectedMessageId)) {
+      setSelectedMessageId(null);
+    }
+  }, [myMessages, selectedMessageId]);
 
   const selectedMessage = useMemo(
     () => myMessages.find((m) => m.id === selectedMessageId) || null,
@@ -77,7 +86,11 @@ export default function DashboardMessagesPage() {
     isError: isErrorReplies,
   } = useQuery({
     queryKey: ['dashboard-contact-replies', selectedMessageId],
-    enabled: Boolean(selectedMessageId),
+    enabled:
+      isAuthenticated &&
+      !isAuthLoading &&
+      !!accessToken &&
+      Boolean(selectedMessageId),
     refetchInterval: selectedMessageId ? 3000 : false,
     queryFn: async () => {
       const res = await api.get(`/contacts/${selectedMessageId}/replies`);
@@ -153,7 +166,7 @@ export default function DashboardMessagesPage() {
                   onClick={() => setSelectedMessageId(message.id)}
                   className={`w-full text-left px-4 py-3 border-b border-white/[0.04] transition-colors ${
                     isActive
-                      ? 'bg-blue-600/10 border-blue-500/20'
+                      ? 'bg-white/5 border-white/10'
                       : 'hover:bg-white/[0.03]'
                   }`}
                 >
@@ -226,7 +239,7 @@ export default function DashboardMessagesPage() {
                     key={reply.id}
                     className={`rounded-xl p-3 border ${
                       reply.senderRole === 'ADMIN'
-                        ? 'bg-blue-500/10 border-blue-400/20'
+                        ? 'bg-blue-500/10 border-white/10'
                         : 'bg-white/[0.03] border-white/10'
                     }`}
                   >

@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 import { api, normalizeList } from '@/lib/api';
 import { Investment } from '@/lib/api-types';
 import { useQuery } from '@tanstack/react-query';
@@ -17,12 +18,14 @@ import { useState } from 'react';
 
 export default function InvestmentsPage() {
   const [filter, setFilter] = useState('all');
+  const { isAuthenticated, isLoading: isAuthLoading, accessToken } = useAuth();
   const {
     data: investments = [],
     isLoading,
     isError,
   } = useQuery({
     queryKey: ['my-investments'],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     queryFn: async () => {
       const res = await api.get<{
         success: true;
@@ -111,7 +114,7 @@ export default function InvestmentsPage() {
             >
               <div className='flex items-center gap-2 mb-2'>
                 <Icon
-                  className={`w-4 h-4 ${s.color === 'emerald' ? 'text-emerald-400' : s.color === 'red' ? 'text-red-400' : 'text-blue-400'}`}
+                  className={`w-4 h-4 ${s.color === 'emerald' ? 'text-emerald-400' : s.color === 'red' ? 'text-red-400' : 'text-white'}`}
                 />
                 <span className='text-xs text-white/30 uppercase tracking-wider'>
                   {s.label}
@@ -183,12 +186,12 @@ export default function InvestmentsPage() {
               <div className='bg-white/[0.02] border border-white/5 rounded-2xl p-5 hover:bg-white/[0.04] transition-all group'>
                 <div className='flex items-center justify-between gap-4'>
                   <div className='flex items-center gap-4 min-w-0'>
-                    <div className='w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0'>
-                      <Building2 className='w-5 h-5 text-blue-400' />
+                    <div className='w-12 h-12 rounded-xl bg-blue-500/10 border border-white/10 flex items-center justify-center shrink-0'>
+                      <Building2 className='w-5 h-5 text-white' />
                     </div>
                     <div className='min-w-0'>
                       <div className='flex items-center gap-2'>
-                        <p className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors'>
+                        <p className='text-sm font-semibold text-white group-hover:text-white transition-colors'>
                           {inv.property}
                         </p>
                         <Badge

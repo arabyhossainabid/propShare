@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 import { api, getApiErrorMessage, normalizeList } from '@/lib/api';
 import { Property } from '@/lib/api-types';
 import { submitPropertyForReview } from '@/lib/property-submit';
@@ -32,6 +33,7 @@ export default function MyPropertiesPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const { isAuthenticated, isLoading: isAuthLoading, accessToken } = useAuth();
 
   // Fetch properties based on filter with live API
   const {
@@ -40,6 +42,7 @@ export default function MyPropertiesPage() {
     isError,
   } = useQuery({
     queryKey: ['my-properties', filter],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     queryFn: async () => {
       const res = await api.get<{
         success: true;
@@ -100,7 +103,7 @@ export default function MyPropertiesPage() {
           </p>
         </div>
         <Link href='/dashboard/properties/create'>
-          <Button className='bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm'>
+          <Button className='bg-white/10 hover:bg-white/15 text-white rounded-xl text-sm'>
             <PlusCircle className='w-4 h-4 mr-2' /> Create New
           </Button>
         </Link>
@@ -167,8 +170,8 @@ export default function MyPropertiesPage() {
           >
             <div className='flex items-center justify-between gap-4'>
               <div className='flex items-center gap-4 min-w-0'>
-                <div className='w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0'>
-                  <Building2 className='w-5 h-5 text-blue-400' />
+                <div className='w-12 h-12 rounded-xl bg-blue-500/10 border border-white/10 flex items-center justify-center shrink-0'>
+                  <Building2 className='w-5 h-5 text-white' />
                 </div>
                 <div className='min-w-0'>
                   <div className='flex items-center gap-2 flex-wrap'>
@@ -207,7 +210,7 @@ export default function MyPropertiesPage() {
                   <Button
                     onClick={() => submitMutation.mutate(p.id)}
                     variant='outline'
-                    className='border-blue-500/20 text-blue-400 hover:bg-blue-500/10 rounded-xl text-xs h-9 px-3'
+                    className='border-white/10 text-white hover:bg-white/15/10 rounded-xl text-xs h-9 px-3'
                   >
                     <Send className='w-3 h-3 mr-1' /> Submit
                   </Button>

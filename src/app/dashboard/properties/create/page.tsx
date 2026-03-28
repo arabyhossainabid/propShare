@@ -3,6 +3,7 @@
 import { ImageUploader } from '@/components/ImageUploader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 import { api, getApiErrorMessage, normalizeList } from '@/lib/api';
 import { Category } from '@/lib/api-types';
 import {
@@ -25,6 +26,7 @@ import toast from 'react-hot-toast';
 
 export default function CreatePropertyPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading, accessToken } = useAuth();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -91,6 +93,7 @@ export default function CreatePropertyPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['create-property-categories'],
+    enabled: isAuthenticated && !isAuthLoading && !!accessToken,
     queryFn: async () => {
       const res = await api.get('/categories');
       return normalizeList<Category>(res?.data?.data);
@@ -325,7 +328,7 @@ export default function CreatePropertyPage() {
           disabled={
             createMutation.isPending || submitForReviewMutation.isPending
           }
-          className='flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-5 text-sm font-semibold group'
+          className='flex-1 bg-white/10 hover:bg-white/15 text-white rounded-xl py-5 text-sm font-semibold group'
         >
           Submit for Review{' '}
           <ArrowRight className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />
