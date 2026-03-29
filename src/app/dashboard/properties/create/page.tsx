@@ -318,16 +318,6 @@ export default function CreatePropertyPage() {
       {/* Actions */}
       <div className='flex gap-3'>
         <Button
-          variant='outline'
-          onClick={() => createMutation.mutate()}
-          disabled={
-            createMutation.isPending || submitForReviewMutation.isPending
-          }
-          className='border-white/10 text-white hover:bg-white/5 rounded-xl px-6 py-5'
-        >
-          <Save className='w-4 h-4 mr-2' /> Save as Draft
-        </Button>
-        <Button
           onClick={() => submitForReviewMutation.mutate()}
           disabled={
             createMutation.isPending || submitForReviewMutation.isPending

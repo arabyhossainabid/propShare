@@ -3,11 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
-import { getApiErrorMessage } from '@/lib/api';
 import { ArrowRight, Building2, Menu, Sparkles, User } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -18,18 +16,9 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success('Logged out');
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,12 +99,6 @@ export default function Navbar() {
                       : user?.name || 'Dashboard'}
                   </Button>
                 </Link>
-                <Button
-                  onClick={handleLogout}
-                  className='bg-white/10 hover:bg-white/15 text-white rounded-xl px-6 text-sm'
-                >
-                  Logout
-                </Button>
               </>
             ) : (
               <>
@@ -205,15 +188,6 @@ export default function Navbar() {
                             : user?.name || 'Dashboard'}
                         </Button>
                       </Link>
-                      <Button
-                        onClick={async () => {
-                          await handleLogout();
-                          setIsOpen(false);
-                        }}
-                        className='w-full bg-white/10 hover:bg-white/15 text-white rounded-xl h-12'
-                      >
-                        Logout
-                      </Button>
                     </>
                   ) : (
                     <>
